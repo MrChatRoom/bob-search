@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bob Image Search</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: white;
+            text-align: center;
+            padding: 50px;
+        }
+
+        input {
+            width: 300px;
+            padding: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        #result {
+            margin-top: 30px;
+            max-width: 800px;
+            margin: auto;
+            text-align: left;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        a {
+            text-decoration: none;
+            color: blue;
+        }
+
+        #imageBtn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 12px;
+            padding: 6px 10px;
+            background: #f2f2f2;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<button id="imageBtn">Normal Search</button>
+
+<h1>Bob Image Search</h1>
+
+<input id="searchBox" placeholder="Search something...">
+<button id="searchBtn">Search</button>
+
+<div id="result"></div>
+
+<script src="image script.js"></script>
+
+<script>
+    document.getElementById("imageBtn").addEventListener("click", () => {
+        window.location.href = "index.html";
+    });
+</script>
+
+</body>
+</html>
