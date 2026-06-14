@@ -6,33 +6,69 @@ let images = [];
 let page = 0;
 const perPage = 10;
 
+function score(title, query) {
+    const t = title.toLowerCase();
+    const words = query.toLowerCase().split(/\s+/);
+
+    let s = 0;
+
+    for (const word of words) {
+        if (t === word) s += 100;
+        else if (t.includes(word)) s += 20;
+    }
+
+    return s;
+}
+
 async function searchImages() {
     const query = searchBox.value.trim();
+
     if (!query) return;
 
-    result.innerHTML = "<p>Searching images...</p>";
+    result.innerHTML = "<p>Searching...</p>";
 
     try {
         const res = await fetch(
-            `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=100&prop=imageinfo&iiprop=url&format=json&origin=*`
+            `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=500&prop=imageinfo&iiprop=url&format=json&origin=*`
         );
 
         const data = await res.json();
 
-        images = Object.values(data.query?.pages || {})
-            .map(p => p.imageinfo?.[0]?.url)
-            .filter(Boolean)
-            .filter(url =>
-                url.startsWith("http") &&
-                !url.includes(".tif") &&
-                !url.includes(".svg")
-            );
+        const pages = Object.values(data.query?.pages || {});
+
+        images = pages
+            .filter(p => p.imageinfo?.[0]?.url)
+            .filter(p => {
+                const title = p.title.toLowerCase();
+
+                if (title.includes("diagram")) return false;
+                if (title.includes("icon")) return false;
+                if (title.includes("logo")) return false;
+                if (title.includes("coat of arms")) return false;
+                if (title.includes("flag")) return false;
+                if (title.includes("map")) return false;
+                if (title.includes("skeleton")) return false;
+                if (title.includes("skull")) return false;
+                if (title.includes("dead")) return false;
+                if (title.includes("carcass")) return false;
+                if (title.includes("corpse")) return false;
+
+                return true;
+            })
+            .sort((a, b) =>
+                score(b.title, query) - score(a.title, query)
+            )
+            .map(p => ({
+                title: p.title,
+                url: p.imageinfo[0].url
+            }));
 
         page = 0;
+
         renderPage();
 
     } catch {
-        result.innerHTML = "<p>Failed to load images.</p>";
+        result.innerHTML = "<p>Search failed.</p>";
     }
 }
 
@@ -50,53 +86,59 @@ function renderPage() {
     result.innerHTML = `
         <div style="
             display:grid;
-            grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-            gap:10px;
+            grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+            gap:12px;
             margin-top:20px;
         ">
-            ${current.map(url => `
-                <img
-                    src="${url}"
-                    loading="lazy"
-                    referrerpolicy="no-referrer"
-                    style="
-                        width:100%;
-                        height:200px;
-                        object-fit:cover;
-                        border-radius:6px;
-                        border:1px solid #ddd;
-                    "
-                >
+            ${current.map(img => `
+                <div>
+                    <img
+                        src="${img.url}"
+                        alt="${img.title}"
+                        loading="lazy"
+                        onerror="this.parentElement.remove()"
+                        style="
+                            width:100%;
+                            height:220px;
+                            object-fit:cover;
+                            border:1px solid #ddd;
+                            border-radius:6px;
+                        "
+                    >
+                </div>
             `).join("")}
         </div>
 
         <div style="
-            margin-top:20px;
             display:flex;
             justify-content:center;
             gap:10px;
+            margin-top:20px;
         ">
             ${page > 0 ? `<button id="prevBtn">Previous Page</button>` : ""}
             ${end < images.length ? `<button id="nextBtn">Next Page</button>` : ""}
         </div>
 
-        <div style="text-align:center;margin-top:10px;">
-            Page ${page + 1} of ${Math.ceil(images.length / perPage)}
+        <div style="
+            text-align:center;
+            margin-top:10px;
+        ">
+            Page ${page + 1} of ${Math.max(1, Math.ceil(images.length / perPage))}
         </div>
     `;
 
-    const prev = document.getElementById("prevBtn");
-    const next = document.getElementById("nextBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
 
-    if (prev) {
-        prev.onclick = () => {
+    if (prevBtn) {
+        prevBtn.onclick = () => {
             page--;
             renderPage();
         };
     }
 
-    if (next) {
-        next.onclick = () => {
+    if (nextBtn) {
+        nextBtn.onclick = () => {
             page++;
             renderPage();
         };
